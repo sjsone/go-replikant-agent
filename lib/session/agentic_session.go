@@ -107,6 +107,7 @@ func (as *AgenticSession) handleToolCall(ctx context.Context, new_part *agentic_
 		as.delegate.SessionOnToolCallsReceived(new_part.ToolCalls)
 	}
 
+	// TODO: move logic into SimpleToolManager / ToolManager interface
 	results := make([]tool.FunctionResult, 0)
 
 	for _, call := range new_part.ToolCalls {
