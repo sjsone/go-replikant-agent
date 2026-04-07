@@ -5,3 +5,5 @@ AGENTS.md
 .claude
 ## Misc
 .DS_Store
+
+.env
