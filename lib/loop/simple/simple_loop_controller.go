@@ -33,8 +33,8 @@ func NewSimpleLoopController() *SimpleLoopController {
 	}
 }
 
-func (c *SimpleLoopController) SetDelegate(delegate *loop.Delegate) {
-	c.delegate = *delegate
+func (c *SimpleLoopController) SetDelegate(delegate loop.Delegate) {
+	c.delegate = delegate
 }
 
 func (c *SimpleLoopController) LoopAgain(agentContext *agentic_context.AgentContext) bool {

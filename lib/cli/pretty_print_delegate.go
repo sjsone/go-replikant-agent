@@ -176,26 +176,6 @@ func (d *PrettyPrintDelegate) SessionOnLoopEnd() {
 	}
 }
 
-// MultiplexerOnDirectivesSelected is called after the multiplexer selects active directives.
-func (d *PrettyPrintDelegate) MultiplexerOnDirectivesSelected(allDirectives []directive.Directive, activeDirectives []directive.Directive) {
-	// Add newline after streaming if needed
-	if d.pendingNewline {
-		fmt.Println()
-		d.pendingNewline = false
-	}
-
-	fmt.Printf("%s%s[Directives%s %d/%d active]%s\n", dim, brightBlue, dim, len(activeDirectives), len(allDirectives), reset)
-
-	// List active directive names
-	if len(activeDirectives) > 0 {
-		names := make([]string, 0, len(activeDirectives))
-		for _, dir := range activeDirectives {
-			names = append(names, dir.GetName())
-		}
-		fmt.Printf("%s│ %s%s%s\n", dim, dim, strings.Join(names, ", "), reset)
-	}
-}
-
 // RouterOnRoutingDecision is called when RouterMultiplexer makes a routing decision.
 func (d *PrettyPrintDelegate) RouterOnRoutingDecision(decision router.RoutingDecision, allOptions []*router.RoutingOption, activeOptions []*router.RoutingOption) {
 	// Add newline after streaming if needed

@@ -172,7 +172,6 @@ type MockDelegate struct {
 	RequestsSent       []RequestSentRecord
 	LoopIterations     []int
 	LoopEnded          bool
-	DirectivesSelected []DirectivesSelectedRecord
 	RoutingDecisions   []RoutingDecisionRecord
 }
 
@@ -180,12 +179,6 @@ type MockDelegate struct {
 type RequestSentRecord struct {
 	Messages   []connector.Message
 	Directives []directive.Directive
-}
-
-// DirectivesSelectedRecord records a directive selection event.
-type DirectivesSelectedRecord struct {
-	AllDirectives    []directive.Directive
-	ActiveDirectives []directive.Directive
 }
 
 // RoutingDecisionRecord records a routing decision event.
@@ -204,7 +197,6 @@ func NewMockDelegate() *MockDelegate {
 		ChunksReceived:     make([]string, 0),
 		RequestsSent:       make([]RequestSentRecord, 0),
 		LoopIterations:     make([]int, 0),
-		DirectivesSelected: make([]DirectivesSelectedRecord, 0),
 		RoutingDecisions:   make([]RoutingDecisionRecord, 0),
 	}
 }
@@ -264,18 +256,8 @@ func (m *MockDelegate) SessionOnLoopEnd() {
 	m.LoopEnded = true
 }
 
-// OnDirectivesSelected implements DirectiveSelectionDelegate.
-func (m *MockDelegate) OnDirectivesSelected(allDirectives []directive.Directive, activeDirectives []directive.Directive) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.DirectivesSelected = append(m.DirectivesSelected, DirectivesSelectedRecord{
-		AllDirectives:    allDirectives,
-		ActiveDirectives: activeDirectives,
-	})
-}
-
 // RouterOnRoutingDecision implements router.Delegate.
-func (m *MockDelegate) OnRoutingDecision(decision router.RoutingDecision, allOptions []*router.RoutingOption, activeOptions []*router.RoutingOption) {
+func (m *MockDelegate) RouterOnRoutingDecision(decision router.RoutingDecision, allOptions []*router.RoutingOption, activeOptions []*router.RoutingOption) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.RoutingDecisions = append(m.RoutingDecisions, RoutingDecisionRecord{
@@ -345,16 +327,6 @@ func (m *MockDelegate) GetLoopIterations() []int {
 	return iters
 }
 
-// GetDirectivesSelected returns all directive selection events.
-func (m *MockDelegate) GetDirectivesSelected() []DirectivesSelectedRecord {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	selected := make([]DirectivesSelectedRecord, len(m.DirectivesSelected))
-	copy(selected, m.DirectivesSelected)
-	return selected
-}
-
 // GetRoutingDecisions returns all routing decision events.
 func (m *MockDelegate) GetRoutingDecisions() []RoutingDecisionRecord {
 	m.mu.Lock()
@@ -376,7 +348,6 @@ func (m *MockDelegate) Reset() {
 	m.ChunksReceived = make([]string, 0)
 	m.RequestsSent = make([]RequestSentRecord, 0)
 	m.LoopIterations = make([]int, 0)
-	m.DirectivesSelected = make([]DirectivesSelectedRecord, 0)
 	m.RoutingDecisions = make([]RoutingDecisionRecord, 0)
 }
 
@@ -817,8 +788,8 @@ func NewMockLoopControllerDelegate() *MockLoopControllerDelegate {
 	}
 }
 
-// OnLoopDecision implements loop.Delegate.
-func (m *MockLoopControllerDelegate) OnLoopDecision(decision loop.LoopDecision) {
+// LoopOnLoopDecision implements loop.Delegate.
+func (m *MockLoopControllerDelegate) LoopOnLoopDecision(decision loop.LoopDecision) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.Decisions = append(m.Decisions, decision)
