@@ -162,6 +162,7 @@ func (as *AgenticSession) handleToolCall(ctx context.Context, new_part *agentic_
 	}
 }
 
+// TODO: rename `loopInner` to something better
 func (as *AgenticSession) loopInner(ctx context.Context, directives []directive.Directive) error {
 
 	messages := as.buildMessagesForConnector(directives)
