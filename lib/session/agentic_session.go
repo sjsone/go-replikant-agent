@@ -89,6 +89,7 @@ func (as *AgenticSession) ProcessContextPart(ctx context.Context, part *agentic_
 }
 
 func (as *AgenticSession) buildMessagesForConnector(directives []directive.Directive) *[]connector.Message {
+	// TODO: introduce new method to influence message building (to enable classification-based-context-manipulation)
 	// Build messages fresh from current context (system message + all parts)
 	messages := []connector.Message{connector.NewSystemMessage(as.promptBuilder.Build(directives).Raw)}
 	for _, p := range as.currentContext.Parts {
