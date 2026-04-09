@@ -224,6 +224,8 @@ func filterOptionsByName(options []*router.RoutingOption, names []string) []*rou
 	for _, name := range names {
 		if opt, ok := nameMap[name]; ok {
 			result = append(result, opt)
+		} else {
+			log.Fatalln("Unkown option: " + name)
 		}
 	}
 	return result
