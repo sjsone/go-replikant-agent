@@ -1,6 +1,7 @@
 package multiplexer
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/sjsone/go-replikant-agent/lib/agentic_context"
@@ -268,13 +269,8 @@ func TestRouterMultiplexer_RoutingError(t *testing.T) {
 	mockRouter := libtesting.NewMockRouter()
 	m := NewRouterMultiplexer(directives, mockRouter)
 
-	// Set routing error
-	// Note: In the new Router interface, errors are handled differently
-	// We simulate errors by setting an empty routing result
-	mockRouter.SetRoutingDecision(&router.RoutingDecision{
-		SelectedIDs: []string{},
-		Reasoning:   "Error simulation",
-	})
+	// Simulate routing error (Route returns nil)
+	mockRouter.SetError(fmt.Errorf("routing failed"))
 
 	ctx := createRouterContextWithParts(agentic_context.NewUserContextPart("Test"))
 	result := m.GetActiveDirectivesForContext(*ctx)

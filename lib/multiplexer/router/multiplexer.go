@@ -44,6 +44,10 @@ func (m *RouterMultiplexer) GetActiveDirectivesForContext(ctx agentic_context.Ag
 	options := m.routingOptionsFromDirectives()
 
 	routingResult := m.router.Route(context.Background(), userMsg, options)
+	if routingResult == nil {
+		// TODO: handle nil routing result
+		return m.directives
+	}
 
 	// Store the routing decision
 	if routingResult.Decision != nil {
