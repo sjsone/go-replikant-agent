@@ -696,6 +696,13 @@ func (m *MockRouter) SetDelegate(delegate router.Delegate) {
 	m.Delegate = delegate
 }
 
+// SetError causes Route to return nil, simulating a routing error.
+func (m *MockRouter) SetError(err error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.ErrorToReturn = err
+}
+
 // Route implements the Router interface.
 func (m *MockRouter) Route(ctx context.Context, userQuery string, allAvailableOptions []*router.RoutingOption) *router.RoutingResult {
 	// userQuery parameter is accepted but not used in the mock
@@ -703,6 +710,11 @@ func (m *MockRouter) Route(ctx context.Context, userQuery string, allAvailableOp
 	defer m.mu.Unlock()
 
 	m.CallsMade++
+
+	// If an error is set, return nil to simulate routing failure
+	if m.ErrorToReturn != nil {
+		return nil
+	}
 
 	// If we have a pre-set result, return it
 	if m.ResultToReturn != nil {
