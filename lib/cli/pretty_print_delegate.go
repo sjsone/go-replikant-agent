@@ -109,13 +109,19 @@ func (d *PrettyPrintDelegate) SessionOnToolCallsReceived(calls []tool.FunctionCa
 	d.inToolBlock = true
 }
 
-func (d *PrettyPrintDelegate) SessionOnToolExecuted(call tool.FunctionCall, result tool.FunctionResult) {
+func (d PrettyPrintDelegate) getColoredCheckIcon(ok bool) (string, string) {
 	icon := "✓"
 	color := green
-	if result.Error {
+	if !ok {
 		icon = "✗"
 		color = red
 	}
+
+	return icon, color
+}
+
+func (d *PrettyPrintDelegate) SessionOnToolExecuted(call tool.FunctionCall, result tool.FunctionResult) {
+	icon, color := d.getColoredCheckIcon(!result.Error)
 
 	// Format result content
 	content := strings.TrimSpace(result.Content)
@@ -132,7 +138,7 @@ func (d *PrettyPrintDelegate) SessionOnToolExecuted(call tool.FunctionCall, resu
 	// Replace newlines with spaces for single-line display
 	content = strings.ReplaceAll(content, "\n", " ")
 
-	fmt.Printf("\n%s  %s %s%s%s", dim, icon, color, content, reset)
+	fmt.Printf("\n%s  %s%s %s%s%s%s", dim, color, icon, reset, dim, content, reset)
 }
 
 func (d *PrettyPrintDelegate) SessionOnStreamingChunk(chunk string) {
@@ -189,7 +195,7 @@ func (d *PrettyPrintDelegate) RouterOnRoutingDecision(decision router.RoutingDec
 	if decision.Reasoning != "" {
 		// Truncate long reasoning
 		reasoning := decision.Reasoning
-		reasoningTruncateLength := 500
+		reasoningTruncateLength := 1500
 		if len(reasoning) > reasoningTruncateLength {
 			reasoning = reasoning[:reasoningTruncateLength] + "..."
 		}
@@ -242,11 +248,27 @@ func (d *PrettyPrintDelegate) RouterOnRoutingDecision(decision router.RoutingDec
 				c = "╭"
 			}
 
-			if len(opt.ToolNames) > 0 {
-				fmt.Printf("%s│%s%s[%s]%s%s: tools: %v%s\n", dim, c, cyan, opt.Name, reset, dim, opt.ToolNames, dim)
+			fmt.Printf("%s│%s%s[%s]%s%s:\n", dim, c, cyan, opt.Name, reset, dim)
 
+			optPrompt := strings.Trim(opt.Text, "")
+			optPrompt = strings.ReplaceAll(optPrompt, "\n", " ")
+			optPromptTruncateLength := 40
+			if len(optPrompt) > optPromptTruncateLength {
+				optPrompt = optPrompt[:optPromptTruncateLength] + "..."
+			}
+
+			if optPrompt != "" {
+				fmt.Printf("%s││├─Prompt: '%s'%s\n", dim, optPrompt, reset)
 			} else {
-				fmt.Printf("%s│%s%s[%s]%s%s\n", dim, c, cyan, opt.Name, reset, reset)
+				promptIcon, promptIconColor := d.getColoredCheckIcon(false)
+				fmt.Printf("%s││├─Prompt: %s%s%s\n", dim, promptIconColor, promptIcon, reset)
+			}
+
+			if len(opt.ToolNames) > 0 {
+				fmt.Printf("%s││╰─Tools: %v%s\n", dim, opt.ToolNames, reset)
+			} else {
+				toolsIcon, toolsIconColor := d.getColoredCheckIcon(false)
+				fmt.Printf("%s││╰─Tools: %s%s%s\n", dim, toolsIconColor, toolsIcon, reset)
 			}
 		}
 

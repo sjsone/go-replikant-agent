@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 
 	"github.com/sjsone/go-replikant-agent/lib/connector"
 	"github.com/sjsone/go-replikant-agent/lib/router"
@@ -147,7 +148,10 @@ func (r *SimpleRouter) buildSystemPrompt(options []*router.RoutingOption) string
 
 	prompt += "Available options:\n"
 	for _, opt := range options {
-		prompt += fmt.Sprintf("[%s] %s\n", opt.Name, opt.Text)
+		prompt += fmt.Sprintf("Option ID: <%s>\n", opt.Name)
+		prompt += "```optionText\n"
+		prompt += fmt.Sprintf("%s\n", opt.Text)
+		prompt += "```\n\n"
 	}
 	prompt += "\nReturn JSON with selected_ids (inside `<>` but without the `<>`! So not `<time>` but `time`!) array containing ALL names of relevant options."
 
