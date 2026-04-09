@@ -149,7 +149,7 @@ func (r *SimpleRouter) buildSystemPrompt(options []*router.RoutingOption) string
 	for _, opt := range options {
 		prompt += fmt.Sprintf("[%s] %s\n", opt.Name, opt.Text)
 	}
-	prompt += "\nReturn JSON with selected_ids array containing ALL names of relevant options."
+	prompt += "\nReturn JSON with selected_ids (inside `<>` but without the `<>`! So not `<time>` but `time`!) array containing ALL names of relevant options."
 
 	return prompt
 }
