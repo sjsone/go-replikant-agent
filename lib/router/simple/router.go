@@ -82,11 +82,9 @@ func (r *SimpleRouter) Route(ctx context.Context, userQuery string, allAvailable
 // parseRoutingDecision parses raw JSON into a RoutingDecision.
 func parseRoutingDecision(raw json.RawMessage) (*router.RoutingDecision, error) {
 	var rawDecision struct {
-		ActiveIndices   []int    `json:"active_indices"`
-		SelectedIndices []int    `json:"selected_indices"`
-		SelectedIDs     []string `json:"selected_ids"`
-		Reasoning       string   `json:"reasoning"`
-		Confidence      float64  `json:"confidence"`
+		SelectedIDs []string `json:"selected_ids"`
+		Reasoning   string   `json:"reasoning"`
+		Confidence  float64  `json:"confidence"`
 	}
 	if err := json.Unmarshal(raw, &rawDecision); err != nil {
 		return nil, fmt.Errorf("failed to parse routing decision: %w", err)
