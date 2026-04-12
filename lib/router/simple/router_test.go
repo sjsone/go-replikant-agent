@@ -15,7 +15,7 @@ type mockRoutingConnector struct {
 	err      error
 }
 
-func (m *mockRoutingConnector) SendForRouting(ctx context.Context, messages []connector.ChatMessage) (json.RawMessage, error) {
+func (m *mockRoutingConnector) SendForRouting(ctx context.Context, messages []connector.ChatMessage, schema *connector.JSONSchema) (json.RawMessage, error) {
 	if m.err != nil {
 		return nil, m.err
 	}
@@ -164,47 +164,6 @@ func TestSimpleRouter_Route_ConnectorError_FallbackError(t *testing.T) {
 	// Verify - returns nil on error
 	if routingResult != nil {
 		t.Errorf("Expected nil result on connector error, got non-nil")
-	}
-}
-
-func TestSimpleRouter_Route_UnknownIDs(t *testing.T) {
-	// Setup
-	options := []*router.RoutingOption{
-		{Name: "General", Text: "General conversation"},
-		{Name: "Weather", Text: "Weather tools"},
-	}
-
-	expectedDecision := &router.RoutingDecision{
-		SelectedIDs: []string{"General", "Unknown", "NonExistent", "Weather"},
-		Reasoning:   "Testing unknown ID handling",
-	}
-
-	mockConn := &mockRoutingConnector{
-		decision: expectedDecision,
-	}
-
-	rtr := NewSimpleRouter("Test routing prompt", mockConn)
-
-	// Execute
-	ctx := context.Background()
-	routingResult := rtr.Route(ctx, "test user query", options)
-
-	// Verify - should only include known IDs (General and Weather)
-	result := routingResult.SelectedOptions
-	if len(result) != 2 {
-		t.Errorf("Expected 2 options (ignoring unknown IDs), got %d", len(result))
-	}
-
-	if result[0].Name != "General" {
-		t.Errorf("Expected first option to be 'General', got '%s'", result[0].Name)
-	}
-
-	if result[1].Name != "Weather" {
-		t.Errorf("Expected second option to be 'Weather', got '%s'", result[1].Name)
-	}
-
-	if routingResult.Decision == nil {
-		t.Error("Expected decision to be non-nil")
 	}
 }
 

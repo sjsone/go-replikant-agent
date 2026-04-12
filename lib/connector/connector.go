@@ -21,5 +21,5 @@ type Connector interface {
 type RoutingConnector interface {
 	// SendForRouting sends a request for directive selection/routing.
 	// Returns raw JSON bytes; the caller (router) is responsible for parsing.
-	SendForRouting(ctx context.Context, messages []ChatMessage) (json.RawMessage, error)
+	SendForRouting(ctx context.Context, messages []ChatMessage, schema *JSONSchema) (json.RawMessage, error)
 }

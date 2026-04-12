@@ -86,9 +86,9 @@ func (m *RouterMultiplexer) routingOptionsFromDirectives() []*router.RoutingOpti
 
 		if len(tools) > 0 {
 			text += "\n"
-			text += "Tools:\n"
+			text += "Available tools (do NOT use these as option IDs):\n"
 			for _, t := range tools {
-				text += "  - [" + t.Name + "]: " + t.Description
+				text += "  - " + t.Name + ": " + t.Description
 			}
 		}
 

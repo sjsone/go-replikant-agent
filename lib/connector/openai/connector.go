@@ -93,10 +93,10 @@ func (c *OpenAIConnector) SendNonStreaming(ctx context.Context, messages []ChatM
 
 // SendForRouting implements the Connector interface method for routing decisions.
 // It sends a non-streaming request with structured output and returns raw JSON bytes.
-func (c *OpenAIConnector) SendForRouting(ctx context.Context, messages []connector.ChatMessage) (json.RawMessage, error) {
+func (c *OpenAIConnector) SendForRouting(ctx context.Context, messages []connector.ChatMessage, schema *connector.JSONSchema) (json.RawMessage, error) {
 	rf := ResponseFormat{
 		Type:       "json_schema",
-		JSONSchema: &RoutingDecisionResponseSchema,
+		JSONSchema: schema,
 	}
 
 	content, err := c.SendNonStreaming(ctx, messages, &rf)
@@ -347,27 +347,3 @@ func (c *OpenAIConnector) toolsToOpenAI(tools []*tool.Tool) []ToolDefinition {
 	return result
 }
 
-// RoutingDecisionResponseSchema is the JSON schema for structured routing decisions (OpenAI-specific).
-var RoutingDecisionResponseSchema = JSONSchema{
-	Name:        "routing decision",
-	Strict:      true,
-	Description: "",
-	Schema: map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"selected_ids": map[string]any{
-				"type": "array",
-				"items": map[string]any{
-					"type": "string",
-				},
-				"description": "MUST contain ALL directive names that should be activated. If multiple tools work together, include ALL their names here.",
-			},
-			"reasoning": map[string]any{
-				"type":        "string",
-				"description": "Explanation for why these directives were selected",
-			},
-		},
-		"required":             []string{"selected_ids", "reasoning"},
-		"additionalProperties": false,
-	},
-}

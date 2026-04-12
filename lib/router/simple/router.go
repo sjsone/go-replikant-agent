@@ -59,8 +59,15 @@ func (r *SimpleRouter) Route(ctx context.Context, userQuery string, allAvailable
 	// Build routing messages
 	messages := r.buildRoutingMessages(allAvailableOptions)
 
+	// Build schema with enum constraint from option names
+	optionNames := make([]string, len(allAvailableOptions))
+	for i, opt := range allAvailableOptions {
+		optionNames[i] = opt.Name
+	}
+	schema := BuildRoutingDecisionSchema(optionNames)
+
 	// Call the connector
-	raw, err := r.connector.SendForRouting(ctx, messages)
+	raw, err := r.connector.SendForRouting(ctx, messages, schema)
 	if err != nil {
 		return nil
 	}
@@ -105,7 +112,7 @@ func parseRoutingDecision(raw json.RawMessage) (*router.RoutingDecision, error) 
 	}, nil
 }
 
-// mapIndicesToNames converts integer indices to directive names using the provided map.
+// mapIndicesToNames converts integer indices to option names using the provided map.
 // Unknown indices are silently skipped.
 func mapIndicesToNames(indices []int, availableNames map[int]string) []string {
 	names := make([]string, 0, len(indices))
@@ -143,71 +150,77 @@ func (r *SimpleRouter) buildSystemPrompt(options []*router.RoutingOption) string
 	if prompt == "" {
 		prompt += "You are a routing assistant. Select which options are relevant based on the user's request.\n"
 		prompt += "\n"
-		prompt += "CRITICAL RULE: When analyzing tool dependencies, you MUST put ALL relevant directive names in the selected_ids array.\n"
-		prompt += "CRITICAL RULE: You MUST use bullet-point-style sentences in the reasoning. \n"
+		prompt += "CRITICAL RULE: When analyzing tool dependencies, you MUST put ALL relevant option names in the selected_ids array.\n"
+		prompt += "CRITICAL RULE: You MUST use bullet-point-style sentences in the reasoning.\n"
 		prompt += "\n"
-		prompt += "Tool Dependency Pattern: If tool A requires data that tool B provides, then BOTH directives must be activated.\n"
+		prompt += "Tool Dependency Pattern: If tool A requires data that tool B provides, then BOTH options must be activated.\n"
 		prompt += "\n"
 	}
 
-	prompt += "Available options:\n"
+	prompt += "## Available Options\n"
 	for _, opt := range options {
-		prompt += fmt.Sprintf("Option ID: <%s>\n", opt.Name)
-		prompt += "```optionText\n"
-		prompt += fmt.Sprintf("%s\n", opt.Text)
-		prompt += "```\n\n"
+		prompt += fmt.Sprintf("- **Option name: `%s`**\n", opt.Name)
+		prompt += "  ```\n"
+		prompt += fmt.Sprintf("  %s\n", opt.Text)
+		prompt += "  ```\n\n"
 	}
-	prompt += "\nReturn JSON with selected_ids (inside `<>` but without the `<>`! So not `<time>` but `time`!) array containing ALL names of relevant options."
+
+	prompt += "## Selection Rules\n"
+	prompt += "- The `selected_ids` array MUST ONLY contain option names listed above.\n"
+	prompt += "- Tool names (e.g. `aws___search_documentation`) are NOT option names and must NEVER appear in `selected_ids`.\n"
+	prompt += "- The JSON schema enforces this via an `enum` constraint — only exact option names will be accepted.\n"
+	prompt += "- If multiple options are needed (tool dependencies), include ALL their option names.\n"
+	prompt += "- If no options are needed, return an empty array `[]`.\n"
 
 	return prompt
 }
 
 func (r *SimpleRouter) buildExampleMessages() []connector.ChatMessage {
 	examples := []connector.ChatMessage{
-		// Example 1: Single directive - simple capability request
+		// Example 1: Single option - simple capability request
 		{
 			Role:    "user",
 			Content: "Calculate the sum of these numbers",
 		},
 		{
 			Role:    "assistant",
-			Content: `{"selected_ids": ["calculator"], "reasoning": "User needs mathematical calculation. The calculator directive provides calculation tools."}`,
+			Content: `{"selected_ids": ["calculator"], "reasoning": "User needs mathematical calculation. The calculator option provides calculation tools."}`,
 		},
-		// Example 2: Multiple directives with tool dependency
+		// Example 2: Multiple options with tool dependency
 		{
 			Role:    "user",
 			Content: "Generate a chart for the sales data",
 		},
 		{
 			Role:    "assistant",
-			Content: `{"selected_ids": ["data_retrieval", "chart_generation"], "reasoning": "User wants a chart generated from sales data. Directive data_retrieval has data_retrieval tool. Directive chart_generation has chart_generation tool which PROCESSES the retrieved data into visual format. Tool dependency: chart_generation needs input from data_retrieval. Therefore BOTH directives must be activated."}`,
+			Content: `{"selected_ids": ["data_retrieval", "chart_generation"], "reasoning": "User wants a chart generated from sales data. Option data_retrieval has data_retrieval tool. Option chart_generation has chart_generation tool which PROCESSES the retrieved data into visual format. Tool dependency: chart_generation needs input from data_retrieval. Therefore BOTH options must be activated."}`,
 		},
-		// Example 3: No directives - general conversation
+		// Example 3: No options - general conversation
 		{
 			Role:    "user",
 			Content: "Hello, can you help me?",
 		},
 		{
 			Role:    "assistant",
-			Content: `{"selected_ids": [], "reasoning": "General conversational opening. Doesn't require any tools or capabilities. No directives needed."}`,
+			Content: `{"selected_ids": [], "reasoning": "General conversational opening. Doesn't require any tools or capabilities. No options needed."}`,
 		},
-		// Example 4: Multiple dependent directives for complex workflow
+		// Example 4: Multiple dependent options for complex workflow
 		{
 			Role:    "user",
 			Content: "Translate this document and format it as a PDF report",
 		},
 		{
 			Role:    "assistant",
-			Content: `{"selected_ids": ["translation", "document_formatting", "pdf_generation"], "reasoning": "User requests translation with PDF formatting. Directive translation provides translation capability. Directive document_formatting provides document formatting tools. Directive pdf_generation provides PDF generation. All three directives are needed: translation for content conversion, formatting for layout, and PDF generation for final output format."}`,
+			Content: `{"selected_ids": ["translation", "document_formatting", "pdf_generation"], "reasoning": "User requests translation with PDF formatting. Option translation provides translation capability. Option document_formatting provides document formatting tools. Option pdf_generation provides PDF generation. All three options are needed: translation for content conversion, formatting for layout, and PDF generation for final output format."}`,
 		},
-		// Example 5: Optional directive selection based on user preference
+		// Example 5: Optional option selection based on user preference
 		{
 			Role:    "user",
 			Content: "Send me a summary of today's news",
 		},
 		{
 			Role:    "assistant",
-			Content: `{"selected_ids": ["news"], "reasoning": "User wants a news summary. Directive news provides news retrieval and summarization tools. This is sufficient for the request. No additional directives are required."}`,
+			Content: `{"selected_ids": ["news"], "reasoning": "User wants a news summary. Option news provides news retrieval and summarization tools. This is sufficient for the request. No additional options are required."}`,
 		},
 	}
 	return examples
@@ -231,7 +244,7 @@ func filterOptionsByName(options []*router.RoutingOption, names []string) []*rou
 		if opt, ok := nameMap[name]; ok {
 			result = append(result, opt)
 		} else {
-			log.Fatalln("Unkown option: " + name)
+			log.Fatalf("Unknown routing option: %s", name)
 		}
 	}
 	return result
