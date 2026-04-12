@@ -3,6 +3,8 @@ package router
 // Delegate is an optional interface that delegates can implement
 // to receive LLM routing decisions when using RouterMultiplexer.
 type Delegate interface {
+	RouterPreparedRouting(allOptions []*RoutingOption)
+
 	// RouterOnRoutingDecision is called when RouterMultiplexer makes a routing decision.
 	// Only called for RouterMultiplexer (not SimpleMultiplexer).
 	//

@@ -44,6 +44,10 @@ func (r *SimpleRouter) Route(ctx context.Context, userQuery string, allAvailable
 	// Store the user query for use in buildUserPrompt
 	r.userQuery = userQuery
 
+	if r.delegate != nil {
+		r.delegate.RouterPreparedRouting(allAvailableOptions)
+	}
+
 	// Handle empty options case
 	if len(allAvailableOptions) == 0 {
 		return &router.RoutingResult{

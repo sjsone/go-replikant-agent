@@ -298,6 +298,10 @@ func (im *InteractiveMode) SessionOnLoopEnd() {
 }
 
 // MARK: Router Delegate
+func (im *InteractiveMode) RouterPreparedRouting(allOptions []*router.RoutingOption) {
+	im.outputDelegate.RouterPreparedRouting(allOptions)
+}
+
 func (im *InteractiveMode) RouterOnRoutingDecision(decision router.RoutingDecision, allOptions []*router.RoutingOption, activeOptions []*router.RoutingOption) {
 	im.outputDelegate.RouterOnRoutingDecision(decision, allOptions, activeOptions)
 }

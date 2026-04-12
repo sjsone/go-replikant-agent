@@ -182,6 +182,22 @@ func (d *PrettyPrintDelegate) SessionOnLoopEnd() {
 	}
 }
 
+func (d *PrettyPrintDelegate) RouterPreparedRouting(allOptions []*router.RoutingOption) {
+	fmt.Printf("%s╔Routing Options══════════%s\n", dim, reset)
+
+	for _, o := range allOptions {
+		fmt.Printf(" -- %s \n", o.Name)
+		if len(o.ToolNames) > 0 {
+			fmt.Printf("    Tools: \n")
+			for _, n := range o.ToolNames {
+				fmt.Printf("      - %s \n", n)
+			}
+		}
+	}
+
+	fmt.Printf("\n")
+}
+
 // RouterOnRoutingDecision is called when RouterMultiplexer makes a routing decision.
 func (d *PrettyPrintDelegate) RouterOnRoutingDecision(decision router.RoutingDecision, allOptions []*router.RoutingOption, activeOptions []*router.RoutingOption) {
 	// Add newline after streaming if needed
