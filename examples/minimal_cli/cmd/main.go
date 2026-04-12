@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 	"time"
@@ -14,6 +16,8 @@ import (
 	"github.com/sjsone/go-replikant-agent/lib/connector/openai"
 	"github.com/sjsone/go-replikant-agent/lib/directive"
 	simple_loop "github.com/sjsone/go-replikant-agent/lib/loop/simple"
+	mcpclient "github.com/sjsone/go-replikant-agent/lib/mcp/client"
+	mcpdirective "github.com/sjsone/go-replikant-agent/lib/mcp/directive"
 	router_multiplexer "github.com/sjsone/go-replikant-agent/lib/multiplexer/router"
 	prompt_string_builder "github.com/sjsone/go-replikant-agent/lib/prompt/builder/string"
 	"github.com/sjsone/go-replikant-agent/lib/router/simple"
@@ -25,6 +29,7 @@ var (
 	modelFlag    = flag.String("model", "", "Model to use (or set MODEL_DEFAULT env)")
 	promptArg    = flag.String("prompt", "", "Non-interactive mode: process prompt and exit")
 	systemPrompt = flag.String("system-prompt", "", "System prompt for the agent (default: \"You are a helpful assistant\")")
+	apiKeyFlag   = flag.String("api-key", "", "API key for authentication (or set API_KEY_DEFAULT env)")
 	envFile      = flag.String("env", "", "Load environment from a .env file (default: .env if flag is present without value)")
 )
 
@@ -50,6 +55,7 @@ func main() {
 
 	baseURL := cli.EnvOrFlag("URL_DEFAULT", *baseURLFlag)
 	model := cli.EnvOrFlag("MODEL_DEFAULT", *modelFlag)
+	apiKey := cli.EnvOrFlag("API_KEY_DEFAULT", *apiKeyFlag)
 
 	if baseURL == "" || model == "" {
 		fmt.Fprintln(os.Stderr, "Error: both --url and --model are required.")
@@ -71,6 +77,7 @@ func main() {
 	loopController := simple_loop.NewSimpleLoopController()
 
 	config := openai.DefaultOpenAIConfig(baseURL, model)
+	config.APIKey = apiKey
 	config.Timeout = 120 * time.Second
 	con := openai.NewOpenAIConnector(config)
 
@@ -82,6 +89,21 @@ func main() {
 		directives.NewTimeDirective(),
 		directives.NewTableFormattingDirective(),
 		directives.NewCSVFormattingDirective(),
+	}
+
+	// Connect to AWS Knowledge MCP server.
+	{
+		config := mcpclient.ServerConfig{
+			Name: "aws-knowledge",
+			URL:  "https://knowledge-mcp.global.api.aws",
+		}
+		mcpDir, err := mcpdirective.NewMCPDirective(context.Background(), config)
+		if err != nil {
+			log.Printf("Warning: could not connect to AWS Knowledge MCP server: %v", err)
+		} else {
+			defer mcpDir.Close()
+			allDirectives = append(allDirectives, mcpDir.Directive())
+		}
 	}
 
 	router := simple.NewSimpleRouter("", con)
