@@ -233,14 +233,20 @@ func (r *SimpleRouter) buildUserPrompt() string {
 
 // filterOptionsByName returns options matching the given names.
 // An empty names array means no options should be selected.
+// Duplicate names are deduplicated.
 func filterOptionsByName(options []*router.RoutingOption, names []string) []*router.RoutingOption {
 	nameMap := make(map[string]*router.RoutingOption, len(options))
 	for _, opt := range options {
 		nameMap[opt.Name] = opt
 	}
 
+	seen := make(map[string]struct{})
 	result := make([]*router.RoutingOption, 0, len(names))
 	for _, name := range names {
+		if _, dup := seen[name]; dup {
+			continue
+		}
+		seen[name] = struct{}{}
 		if opt, ok := nameMap[name]; ok {
 			result = append(result, opt)
 		} else {
