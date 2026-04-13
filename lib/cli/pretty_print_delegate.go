@@ -239,6 +239,10 @@ func (d *PrettyPrintDelegate) RouterOnRoutingDecision(decision router.RoutingDec
 			boxWidth = 13
 		}
 
+		if boxWidth > 50 {
+			boxWidth = 50
+		}
+
 		fmt.Println()
 		// Print top border
 		fmt.Printf("%s╭Directives%s%s\n", dim, strings.Repeat("─", boxWidth-2), reset)
