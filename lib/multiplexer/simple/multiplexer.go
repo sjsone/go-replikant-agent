@@ -1,6 +1,8 @@
 package multiplexer
 
 import (
+	"context"
+
 	"github.com/sjsone/go-replikant-agent/lib/agentic_context"
 	"github.com/sjsone/go-replikant-agent/lib/directive"
 )
@@ -15,7 +17,7 @@ func NewSimpleMultiplexer(directives []directive.Directive) *SimpleMultiplexer {
 	}
 }
 
-func (m *SimpleMultiplexer) GetActiveDirectivesForContext(ac agentic_context.AgentContext) []directive.Directive {
+func (m *SimpleMultiplexer) GetActiveDirectivesForContext(ctx context.Context, ac agentic_context.AgentContext) []directive.Directive {
 	return m.directives
 }
 

@@ -69,7 +69,7 @@ func (m *MockConnector) SetRoutingError(err error) {
 }
 
 // Send implements the Connector interface.
-func (m *MockConnector) Send(ctx context.Context, messages *[]connector.Message, directives []directive.Directive, onChunk connector.ChunkHandler) (error, *agentic_context.ContextPart) {
+func (m *MockConnector) Send(ctx context.Context, messages *[]connector.Message, directives []directive.Directive, onChunk connector.ChunkHandler) (*agentic_context.ContextPart, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -86,7 +86,7 @@ func (m *MockConnector) Send(ctx context.Context, messages *[]connector.Message,
 		onChunk(m.ResponseToReturn.Raw)
 	}
 
-	return m.ErrorToReturn, m.ResponseToReturn
+	return m.ResponseToReturn, m.ErrorToReturn
 }
 
 // SendForRouting implements the RoutingConnector interface.
@@ -563,9 +563,9 @@ func NewMockMultiplexer(directives ...directive.Directive) *MockMultiplexer {
 }
 
 // GetActiveDirectivesForContext implements Multiplexer.
-func (m *MockMultiplexer) GetActiveDirectivesForContext(ctx agentic_context.AgentContext) []directive.Directive {
+func (m *MockMultiplexer) GetActiveDirectivesForContext(ctx context.Context, ac agentic_context.AgentContext) []directive.Directive {
 	m.callsMade++
-	m.contextsSeen = append(m.contextsSeen, &ctx)
+	m.contextsSeen = append(m.contextsSeen, &ac)
 	return m.directives
 }
 
@@ -652,12 +652,6 @@ func (t *SimpleTesting) GetErrors() []string {
 	return t.errors
 }
 
-// ErrRoutingFailed is a sentinel error for testing routing failures.
-var ErrRoutingFailed = fmt.Errorf("routing failed")
-
-// ErrCommandFailed is a sentinel error for testing command execution failures.
-var ErrCommandFailed = fmt.Errorf("command failed")
-
 // MockRouter is a mock implementation of Router for testing.
 type MockRouter struct {
 	mu                      sync.Mutex
@@ -696,7 +690,7 @@ func (m *MockRouter) SetDelegate(delegate router.Delegate) {
 	m.Delegate = delegate
 }
 
-// SetError causes Route to return nil, simulating a routing error.
+// SetError causes Route to return an error, simulating a routing error.
 func (m *MockRouter) SetError(err error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -704,16 +698,16 @@ func (m *MockRouter) SetError(err error) {
 }
 
 // Route implements the Router interface.
-func (m *MockRouter) Route(ctx context.Context, userQuery string, allAvailableOptions []*router.RoutingOption) *router.RoutingResult {
+func (m *MockRouter) Route(ctx context.Context, userQuery string, allAvailableOptions []*router.RoutingOption) (*router.RoutingResult, error) {
 	// userQuery parameter is accepted but not used in the mock
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	m.CallsMade++
 
-	// If an error is set, return nil to simulate routing failure
+	// If an error is set, return it to simulate routing failure
 	if m.ErrorToReturn != nil {
-		return nil
+		return nil, m.ErrorToReturn
 	}
 
 	// If we have a pre-set result, return it
@@ -723,7 +717,7 @@ func (m *MockRouter) Route(ctx context.Context, userQuery string, allAvailableOp
 		if m.Delegate != nil && result.Decision != nil {
 			m.Delegate.RouterOnRoutingDecision(*result.Decision, allAvailableOptions, result.SelectedOptions)
 		}
-		return result
+		return result, nil
 	}
 
 	// If we have a routing decision set, create a result from it
@@ -759,14 +753,14 @@ func (m *MockRouter) Route(ctx context.Context, userQuery string, allAvailableOp
 		if m.Delegate != nil {
 			m.Delegate.RouterOnRoutingDecision(*decision, allAvailableOptions, finalOptions)
 		}
-		return result
+		return result, nil
 	}
 
 	// Default: return all options with a nil decision
 	return &router.RoutingResult{
 		SelectedOptions: allAvailableOptions,
 		Decision:        nil,
-	}
+	}, nil
 }
 
 // GetCallCount returns the number of times Route was called.

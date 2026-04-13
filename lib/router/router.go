@@ -16,5 +16,5 @@ type RoutingResult struct {
 
 type Router interface {
 	SetDelegate(d Delegate)
-	Route(ctx context.Context, userQuery string, allAvailableOptions []*RoutingOption) *RoutingResult
+	Route(ctx context.Context, userQuery string, allAvailableOptions []*RoutingOption) (*RoutingResult, error)
 }

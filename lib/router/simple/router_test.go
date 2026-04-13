@@ -50,9 +50,13 @@ func TestSimpleRouter_Route_Success(t *testing.T) {
 
 	// Execute
 	ctx := context.Background()
-	routingResult := rtr.Route(ctx, "test user query", options)
+	routingResult, err := rtr.Route(ctx, "test user query", options)
 
 	// Verify
+	if err != nil {
+		t.Fatalf("Route returned error: %v", err)
+	}
+
 	result := routingResult.SelectedOptions
 	if len(result) != 2 {
 		t.Errorf("Expected 2 selected options, got %d", len(result))
@@ -85,9 +89,13 @@ func TestSimpleRouter_Route_EmptyOptions(t *testing.T) {
 
 	// Execute
 	ctx := context.Background()
-	routingResult := rtr.Route(ctx, "test user query", []*router.RoutingOption{})
+	routingResult, err := rtr.Route(ctx, "test user query", []*router.RoutingOption{})
 
 	// Verify
+	if err != nil {
+		t.Fatalf("Route returned error: %v", err)
+	}
+
 	result := routingResult.SelectedOptions
 	if len(result) != 0 {
 		t.Errorf("Expected 0 options for empty input, got %d", len(result))
@@ -113,9 +121,12 @@ func TestSimpleRouter_Route_ConnectorError_FallbackNone(t *testing.T) {
 
 	// Execute
 	ctx := context.Background()
-	routingResult := rtr.Route(ctx, "test user query", options)
+	routingResult, err := rtr.Route(ctx, "test user query", options)
 
-	// Verify - returns nil on error
+	// Verify - returns error on connector error
+	if err == nil {
+		t.Errorf("Expected error on connector error, got nil")
+	}
 	if routingResult != nil {
 		t.Errorf("Expected nil result on connector error, got non-nil")
 	}
@@ -136,9 +147,12 @@ func TestSimpleRouter_Route_ConnectorError_FallbackAll(t *testing.T) {
 
 	// Execute
 	ctx := context.Background()
-	routingResult := rtr.Route(ctx, "test user query", options)
+	routingResult, err := rtr.Route(ctx, "test user query", options)
 
-	// Verify - returns nil on error (fallback modes not yet implemented)
+	// Verify - returns error on connector error
+	if err == nil {
+		t.Errorf("Expected error on connector error, got nil")
+	}
 	if routingResult != nil {
 		t.Errorf("Expected nil result on connector error, got non-nil")
 	}
@@ -159,9 +173,12 @@ func TestSimpleRouter_Route_ConnectorError_FallbackError(t *testing.T) {
 
 	// Execute
 	ctx := context.Background()
-	routingResult := rtr.Route(ctx, "test user query", options)
+	routingResult, err := rtr.Route(ctx, "test user query", options)
 
-	// Verify - returns nil on error
+	// Verify - returns error on connector error
+	if err == nil {
+		t.Errorf("Expected error on connector error, got nil")
+	}
 	if routingResult != nil {
 		t.Errorf("Expected nil result on connector error, got non-nil")
 	}
@@ -187,9 +204,13 @@ func TestSimpleRouter_Route_EmptyIDs(t *testing.T) {
 
 	// Execute
 	ctx := context.Background()
-	routingResult := rtr.Route(ctx, "test user query", options)
+	routingResult, err := rtr.Route(ctx, "test user query", options)
 
 	// Verify
+	if err != nil {
+		t.Fatalf("Route returned error: %v", err)
+	}
+
 	result := routingResult.SelectedOptions
 	if len(result) != 0 {
 		t.Errorf("Expected 0 options for empty IDs, got %d", len(result))
@@ -224,9 +245,13 @@ func TestSimpleRouter_SetExampleMessages(t *testing.T) {
 
 	// Execute
 	ctx := context.Background()
-	routingResult := rtr.Route(ctx, "test user query", options)
+	routingResult, err := rtr.Route(ctx, "test user query", options)
 
 	// Verify
+	if err != nil {
+		t.Fatalf("Route returned error: %v", err)
+	}
+
 	result := routingResult.SelectedOptions
 	if len(result) != 1 {
 		t.Errorf("Expected 1 selected option, got %d", len(result))
@@ -283,9 +308,12 @@ func TestSimpleRouter_FilterOptionsByName(t *testing.T) {
 	}
 
 	// Execute - select names "Option0" and "Option2"
-	result := filterOptionsByName(options, []string{"Option0", "Option2"})
+	result, err := filterOptionsByName(options, []string{"Option0", "Option2"})
 
 	// Verify
+	if err != nil {
+		t.Fatalf("filterOptionsByName returned error: %v", err)
+	}
 	if len(result) != 2 {
 		t.Errorf("Expected 2 filtered options, got %d", len(result))
 	}

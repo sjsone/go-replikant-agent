@@ -30,13 +30,6 @@ type ResponseFormat struct {
 	JSONSchema *JSONSchema `json:"json_schema,omitempty"`
 }
 
-func NewJSONSchemaResponseFormat(JSONSchema *JSONSchema) *ResponseFormat {
-	return &ResponseFormat{
-		Type:       "json_schema",
-		JSONSchema: JSONSchema,
-	}
-}
-
 // JSONSchema defines the schema for structured output.
 type JSONSchema struct {
 	Name        string         `json:"name"`

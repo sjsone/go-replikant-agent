@@ -1,6 +1,7 @@
 package multiplexer
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -42,7 +43,7 @@ func TestRouterMultiplexer_GetActiveDirectivesForContext_NoUserMessage(t *testin
 
 	// Context with no user message (agent message only)
 	ctx := createRouterContextWithParts(agentic_context.NewAgentContextPart("Agent response"))
-	result := m.GetActiveDirectivesForContext(*ctx)
+	result := m.GetActiveDirectivesForContext(context.Background(), *ctx)
 
 	// Should return all directives when no user message
 	if len(result) != 3 {
@@ -66,7 +67,7 @@ func TestRouterMultiplexer_GetActiveDirectivesForContext_WithRouting(t *testing.
 	})
 
 	ctx := createRouterContextWithParts(agentic_context.NewUserContextPart("Hello"))
-	result := m.GetActiveDirectivesForContext(*ctx)
+	result := m.GetActiveDirectivesForContext(context.Background(), *ctx)
 
 	if len(result) != 1 {
 		t.Errorf("Expected 1 directive, got %d", len(result))
@@ -206,7 +207,7 @@ func TestRouterMultiplexer_FilterDirectives(t *testing.T) {
 			})
 
 			ctx := createRouterContextWithParts(agentic_context.NewUserContextPart("Test"))
-			result := m.GetActiveDirectivesForContext(*ctx)
+			result := m.GetActiveDirectivesForContext(context.Background(), *ctx)
 
 			if len(result) != tt.expected {
 				t.Errorf("GetActiveDirectivesForContext() returned %d directives, want %d", len(result), tt.expected)
@@ -235,7 +236,7 @@ func TestRouterMultiplexer_GetLastRoutingDecision(t *testing.T) {
 	mockRouter.SetRoutingDecision(expectedDecision)
 
 	ctx := createRouterContextWithParts(agentic_context.NewUserContextPart("Test"))
-	m.GetActiveDirectivesForContext(*ctx)
+	m.GetActiveDirectivesForContext(context.Background(), *ctx)
 
 	// Should now return the decision
 	decision = m.GetLastRoutingDecision()
@@ -273,7 +274,7 @@ func TestRouterMultiplexer_RoutingError(t *testing.T) {
 	mockRouter.SetError(fmt.Errorf("routing failed"))
 
 	ctx := createRouterContextWithParts(agentic_context.NewUserContextPart("Test"))
-	result := m.GetActiveDirectivesForContext(*ctx)
+	result := m.GetActiveDirectivesForContext(context.Background(), *ctx)
 
 	// Should fallback to all directives
 	if len(result) != 2 {
@@ -298,7 +299,7 @@ func TestRouterMultiplexer_RoutingWithMultipleSelectedIDs(t *testing.T) {
 	})
 
 	ctx := createRouterContextWithParts(agentic_context.NewUserContextPart("Test"))
-	result := m.GetActiveDirectivesForContext(*ctx)
+	result := m.GetActiveDirectivesForContext(context.Background(), *ctx)
 
 	if len(result) != 2 {
 		t.Errorf("Expected 2 directives, got %d", len(result))

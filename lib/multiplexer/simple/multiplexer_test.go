@@ -1,6 +1,7 @@
 package multiplexer
 
 import (
+	"context"
 	"testing"
 
 	"github.com/sjsone/go-replikant-agent/lib/agentic_context"
@@ -95,7 +96,7 @@ func TestSimpleMultiplexer_GetActiveDirectivesForContext(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := NewSimpleMultiplexer(tt.directives)
-			result := m.GetActiveDirectivesForContext(*tt.context)
+			result := m.GetActiveDirectivesForContext(context.Background(), *tt.context)
 
 			if len(result) != tt.expected {
 				t.Errorf("GetActiveDirectivesForContext() returned %d directives, want %d", len(result), tt.expected)
@@ -148,7 +149,7 @@ func TestSimpleMultiplexer_EmptyDirectives(t *testing.T) {
 	m := NewSimpleMultiplexer([]directive.Directive{})
 	ctx := agentic_context.NewAgentContext()
 
-	result := m.GetActiveDirectivesForContext(*ctx)
+	result := m.GetActiveDirectivesForContext(context.Background(), *ctx)
 
 	if len(result) != 0 {
 		t.Errorf("GetActiveDirectivesForContext() returned %d directives, want 0", len(result))
@@ -169,9 +170,9 @@ func TestSimpleMultiplexer_ContextIndependence(t *testing.T) {
 	ctx2 := createContextWithParts(agentic_context.NewAgentContextPart("Hi"))
 	ctx3 := agentic_context.NewAgentContext()
 
-	result1 := m.GetActiveDirectivesForContext(*ctx1)
-	result2 := m.GetActiveDirectivesForContext(*ctx2)
-	result3 := m.GetActiveDirectivesForContext(*ctx3)
+	result1 := m.GetActiveDirectivesForContext(context.Background(), *ctx1)
+	result2 := m.GetActiveDirectivesForContext(context.Background(), *ctx2)
+	result3 := m.GetActiveDirectivesForContext(context.Background(), *ctx3)
 
 	// All should return the same directives regardless of context
 	if len(result1) != len(result2) || len(result2) != len(result3) {
@@ -192,7 +193,7 @@ func TestSimpleMultiplexer_DirectiveOrderPreserved(t *testing.T) {
 	m := NewSimpleMultiplexer(directives)
 
 	ctx := agentic_context.NewAgentContext()
-	result := m.GetActiveDirectivesForContext(*ctx)
+	result := m.GetActiveDirectivesForContext(context.Background(), *ctx)
 
 	if len(result) != 3 {
 		t.Fatalf("Expected 3 directives, got %d", len(result))

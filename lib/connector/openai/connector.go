@@ -109,7 +109,7 @@ func (c *OpenAIConnector) SendForRouting(ctx context.Context, messages []connect
 
 // Send sends messages to the OpenAI API using streaming and returns the complete response as a ContextPart.
 // The response is streamed via onChunk callback while accumulating the complete content.
-func (c *OpenAIConnector) Send(ctx context.Context, messages *[]connector.Message, directives []directive.Directive, onChunk connector.ChunkHandler) (error, *agentic_context.ContextPart) {
+func (c *OpenAIConnector) Send(ctx context.Context, messages *[]connector.Message, directives []directive.Directive, onChunk connector.ChunkHandler) (*agentic_context.ContextPart, error) {
 	// Convert messages to OpenAI format
 	openaiMessages := c.messagesToOpenAI(*messages)
 
@@ -136,14 +136,14 @@ func (c *OpenAIConnector) Send(ctx context.Context, messages *[]connector.Messag
 	// Marshal request body
 	reqBody, err := json.Marshal(req)
 	if err != nil {
-		return fmt.Errorf("failed to marshal request: %w", err), nil
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
 
 	// Create HTTP request with context
 	url := c.config.BaseURL + "/v1/chat/completions"
 	httpReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(reqBody))
 	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err), nil
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	// Set headers
@@ -156,7 +156,7 @@ func (c *OpenAIConnector) Send(ctx context.Context, messages *[]connector.Messag
 	// Send request
 	resp, err := c.client.Do(httpReq)
 	if err != nil {
-		return fmt.Errorf("request failed: %w", err), nil
+		return nil, fmt.Errorf("request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
@@ -164,9 +164,9 @@ func (c *OpenAIConnector) Send(ctx context.Context, messages *[]connector.Messag
 	if resp.StatusCode != http.StatusOK {
 		var errResp ErrorResponse
 		if err := json.NewDecoder(resp.Body).Decode(&errResp); err == nil && errResp.Error.Message != "" {
-			return fmt.Errorf("API error (status %d): %s", resp.StatusCode, errResp.Error.Message), nil
+			return nil, fmt.Errorf("API error (status %d): %s", resp.StatusCode, errResp.Error.Message)
 		}
-		return fmt.Errorf("API error (status %d)", resp.StatusCode), nil
+		return nil, fmt.Errorf("API error (status %d)", resp.StatusCode)
 	}
 
 	var completeContent strings.Builder
@@ -209,7 +209,7 @@ func (c *OpenAIConnector) Send(ctx context.Context, messages *[]connector.Messag
 				part.Stop = true
 			}
 
-			return ctx.Err(), part
+			return part, ctx.Err()
 		default:
 			// Continue processing
 		}
@@ -284,7 +284,7 @@ func (c *OpenAIConnector) Send(ctx context.Context, messages *[]connector.Messag
 
 	// Check for errors
 	if err := scanner.Err(); err != nil {
-		return fmt.Errorf("stream read error: %w", err), nil
+		return nil, fmt.Errorf("stream read error: %w", err)
 	}
 
 	// Create ContextPart with complete response
@@ -300,7 +300,7 @@ func (c *OpenAIConnector) Send(ctx context.Context, messages *[]connector.Messag
 		part.Stop = true
 	}
 
-	return nil, part
+	return part, nil
 }
 
 // messagesToOpenAI converts connector messages to OpenAI chat format.

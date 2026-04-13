@@ -57,7 +57,7 @@ func (as *AgenticSession) ProcessContextPart(ctx context.Context, part *agentic_
 		as.delegate.SessionOnPartAdded(part)
 	}
 
-	directives := as.directiveMultiplexer.GetActiveDirectivesForContext(as.currentContext)
+	directives := as.directiveMultiplexer.GetActiveDirectivesForContext(ctx, as.currentContext)
 
 	for i := 0; i < as.maxAgentLoopCount && as.loopController.LoopAgain(&as.currentContext); i++ {
 		// Check for cancellation before each iteration
@@ -179,7 +179,7 @@ func (as *AgenticSession) loopInner(ctx context.Context, directives []directive.
 		as.delegate.SessionOnRequestSent(*messages, directives)
 	}
 
-	err, new_part := as.connector.Send(ctx, messages, directives, func(chunk string) {
+	new_part, err := as.connector.Send(ctx, messages, directives, func(chunk string) {
 		if as.delegate != nil {
 			as.delegate.SessionOnStreamingChunk(chunk)
 		}

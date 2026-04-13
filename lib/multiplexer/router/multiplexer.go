@@ -2,6 +2,7 @@ package multiplexer
 
 import (
 	"context"
+	"log"
 
 	"github.com/sjsone/go-replikant-agent/lib/agentic_context"
 	"github.com/sjsone/go-replikant-agent/lib/directive"
@@ -33,9 +34,9 @@ func NewRouterMultiplexer(
 }
 
 // GetActiveDirectivesForContext uses LLM routing to determine active directives.
-func (m *RouterMultiplexer) GetActiveDirectivesForContext(ctx agentic_context.AgentContext) []directive.Directive {
+func (m *RouterMultiplexer) GetActiveDirectivesForContext(ctx context.Context, ac agentic_context.AgentContext) []directive.Directive {
 	// Extract latest user message
-	userMsg := m.extractUserMessage(ctx)
+	userMsg := m.extractUserMessage(ac)
 	if userMsg == "" {
 		// TODO: handle non-found user message
 		return m.directives
@@ -43,9 +44,12 @@ func (m *RouterMultiplexer) GetActiveDirectivesForContext(ctx agentic_context.Ag
 
 	options := m.routingOptionsFromDirectives()
 
-	routingResult := m.router.Route(context.Background(), userMsg, options)
+	routingResult, err := m.router.Route(ctx, userMsg, options)
+	if err != nil {
+		log.Printf("routing failed: %v, falling back to all directives", err)
+		return m.directives
+	}
 	if routingResult == nil {
-		// TODO: handle nil routing result
 		return m.directives
 	}
 

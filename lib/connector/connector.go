@@ -15,11 +15,19 @@ type ChunkHandler func(chunk string)
 type Connector interface {
 	// TODO: create SendNonStreaming
 	// TODO: maybe rename Send to SendStreaming
-	Send(ctx context.Context, messages *[]Message, directives []directive.Directive, onChunk ChunkHandler) (error, *agentic_context.ContextPart)
+	Send(ctx context.Context, messages *[]Message, directives []directive.Directive, onChunk ChunkHandler) (*agentic_context.ContextPart, error)
 }
 
 type RoutingConnector interface {
 	// SendForRouting sends a request for directive selection/routing.
 	// Returns raw JSON bytes; the caller (router) is responsible for parsing.
 	SendForRouting(ctx context.Context, messages []ChatMessage, schema *JSONSchema) (json.RawMessage, error)
+}
+
+// FullConnector combines both Connector and RoutingConnector interfaces.
+// Implementations that satisfy both can be referenced as connector.FullConnector,
+// simplifying type constraints for callers.
+type FullConnector interface {
+	Connector
+	RoutingConnector
 }

@@ -13,7 +13,7 @@ type WaitTool struct {
 }
 
 type WaitParams struct {
-	Seconds int `json:"seconds" jsonschema:"description=Number of seconds to wait (1-20),minimum=1,maximum=20"`
+	Seconds int `json:"seconds" jsonschema:"Number of seconds to wait (1-20)"`
 }
 
 func NewWaitTool() tool.ToolCallable {

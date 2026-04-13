@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/sjsone/go-replikant-agent/lib/connector"
 	"github.com/sjsone/go-replikant-agent/lib/router"
@@ -40,7 +39,7 @@ func (r *SimpleRouter) SetDelegate(delegate router.Delegate) {
 	r.delegate = delegate
 }
 
-func (r *SimpleRouter) Route(ctx context.Context, userQuery string, allAvailableOptions []*router.RoutingOption) *router.RoutingResult {
+func (r *SimpleRouter) Route(ctx context.Context, userQuery string, allAvailableOptions []*router.RoutingOption) (*router.RoutingResult, error) {
 	// Store the user query for use in buildUserPrompt
 	r.userQuery = userQuery
 
@@ -53,7 +52,7 @@ func (r *SimpleRouter) Route(ctx context.Context, userQuery string, allAvailable
 		return &router.RoutingResult{
 			SelectedOptions: []*router.RoutingOption{},
 			Decision:        nil,
-		}
+		}, nil
 	}
 
 	// Build routing messages
@@ -69,17 +68,20 @@ func (r *SimpleRouter) Route(ctx context.Context, userQuery string, allAvailable
 	// Call the connector
 	raw, err := r.connector.SendForRouting(ctx, messages, schema)
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("routing connector call failed: %w", err)
 	}
 
 	// Parse the raw JSON into a RoutingDecision
 	decision, err := parseRoutingDecision(raw)
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("failed to parse routing decision: %w", err)
 	}
 
 	// Filter options based on decision
-	result := filterOptionsByName(allAvailableOptions, decision.SelectedIDs)
+	result, err := filterOptionsByName(allAvailableOptions, decision.SelectedIDs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to filter routing options: %w", err)
+	}
 
 	if r.delegate != nil {
 		r.delegate.RouterOnRoutingDecision(*decision, allAvailableOptions, result)
@@ -88,7 +90,7 @@ func (r *SimpleRouter) Route(ctx context.Context, userQuery string, allAvailable
 	return &router.RoutingResult{
 		SelectedOptions: result,
 		Decision:        decision,
-	}
+	}, nil
 }
 
 // parseRoutingDecision parses raw JSON into a RoutingDecision.
@@ -234,7 +236,7 @@ func (r *SimpleRouter) buildUserPrompt() string {
 // filterOptionsByName returns options matching the given names.
 // An empty names array means no options should be selected.
 // Duplicate names are deduplicated.
-func filterOptionsByName(options []*router.RoutingOption, names []string) []*router.RoutingOption {
+func filterOptionsByName(options []*router.RoutingOption, names []string) ([]*router.RoutingOption, error) {
 	nameMap := make(map[string]*router.RoutingOption, len(options))
 	for _, opt := range options {
 		nameMap[opt.Name] = opt
@@ -250,8 +252,8 @@ func filterOptionsByName(options []*router.RoutingOption, names []string) []*rou
 		if opt, ok := nameMap[name]; ok {
 			result = append(result, opt)
 		} else {
-			log.Fatalf("Unknown routing option: %s", name)
+			return nil, fmt.Errorf("unknown routing option: %s", name)
 		}
 	}
-	return result
+	return result, nil
 }
