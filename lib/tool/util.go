@@ -2,8 +2,8 @@ package tool
 
 import "encoding/json"
 
-// parseArgs parses JSON arguments string into a map.
-func ParseArgs(argsStr string) map[string]any {
+// ParseArgsToMap parses JSON arguments string into a map.
+func ParseArgsToMap(argsStr string) map[string]any {
 	if argsStr == "" {
 		return make(map[string]any)
 	}
