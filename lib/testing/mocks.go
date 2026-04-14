@@ -90,7 +90,7 @@ func (m *MockConnector) Send(ctx context.Context, messages *[]connector.Message,
 }
 
 // SendForRouting implements the RoutingConnector interface.
-func (m *MockConnector) SendForRouting(ctx context.Context, messages []connector.ChatMessage, schema *connector.JSONSchema) (json.RawMessage, error) {
+func (m *MockConnector) SendForRouting(ctx context.Context, messages []connector.Message, schema *connector.JSONSchema) (json.RawMessage, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 

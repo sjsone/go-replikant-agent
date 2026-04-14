@@ -33,7 +33,7 @@ func NewOpenAIConnector(config OpenAIConfig) *OpenAIConnector {
 
 // SendNonStreaming sends messages to the OpenAI API without streaming and returns the complete response content.
 // Use this for structured output requests where streaming is not needed.
-func (c *OpenAIConnector) SendNonStreaming(ctx context.Context, messages []ChatMessage, responseFormat *ResponseFormat) (string, error) {
+func (c *OpenAIConnector) SendNonStreaming(ctx context.Context, messages []chatMessage, responseFormat *ResponseFormat) (string, error) {
 	// Build request without streaming
 	req := ChatRequest{
 		Model:          c.config.Model,
@@ -93,13 +93,14 @@ func (c *OpenAIConnector) SendNonStreaming(ctx context.Context, messages []ChatM
 
 // SendForRouting implements the Connector interface method for routing decisions.
 // It sends a non-streaming request with structured output and returns raw JSON bytes.
-func (c *OpenAIConnector) SendForRouting(ctx context.Context, messages []connector.ChatMessage, schema *connector.JSONSchema) (json.RawMessage, error) {
+func (c *OpenAIConnector) SendForRouting(ctx context.Context, messages []connector.Message, schema *connector.JSONSchema) (json.RawMessage, error) {
 	rf := ResponseFormat{
 		Type:       "json_schema",
 		JSONSchema: schema,
 	}
 
-	content, err := c.SendNonStreaming(ctx, messages, &rf)
+	openaiMessages := c.messagesToOpenAI(messages)
+	content, err := c.SendNonStreaming(ctx, openaiMessages, &rf)
 	if err != nil {
 		return nil, err
 	}
@@ -304,31 +305,15 @@ func (c *OpenAIConnector) Send(ctx context.Context, messages *[]connector.Messag
 }
 
 // messagesToOpenAI converts connector messages to OpenAI chat format.
-func (c *OpenAIConnector) messagesToOpenAI(messages []connector.Message) []ChatMessage {
-	result := make([]ChatMessage, 0, len(messages))
+func (c *OpenAIConnector) messagesToOpenAI(messages []connector.Message) []chatMessage {
+	result := make([]chatMessage, 0, len(messages))
 	for _, msg := range messages {
-		result = append(result, ChatMessage{
-			Role:    c.sourceToRole(msg.Source),
+		result = append(result, chatMessage{
+			Role:    msg.Role(),
 			Content: msg.Text,
 		})
 	}
 	return result
-}
-
-// sourceToRole maps a Source to the corresponding OpenAI role.
-func (c *OpenAIConnector) sourceToRole(source agentic_context.Source) string {
-	switch {
-	case source.IsSystem():
-		return "system"
-	case source.IsUser():
-		return "user"
-	case source.IsAgent():
-		return "assistant"
-	case source.IsTool():
-		return "tool"
-	default:
-		return "user"
-	}
 }
 
 // toolsToOpenAI converts tool.Tool to ToolDefinition format.
@@ -346,4 +331,3 @@ func (c *OpenAIConnector) toolsToOpenAI(tools []*tool.Tool) []ToolDefinition {
 	}
 	return result
 }
-

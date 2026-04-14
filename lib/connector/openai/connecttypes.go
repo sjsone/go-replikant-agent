@@ -4,21 +4,31 @@ import (
 	libconnector "github.com/sjsone/go-replikant-agent/lib/connector"
 )
 
-// ChatMessage is an alias to the lib/connector.ChatMessage type.
-// This allows the package to continue using the local name while referencing
-// the shared type definition.
-type ChatMessage = libconnector.ChatMessage
+// chatMessage is the OpenAI wire format for messages.
+type chatMessage struct {
+	Role       string             `json:"role"`
+	Content    string             `json:"content"`
+	ToolCallID string             `json:"tool_call_id,omitempty"`
+	ToolCalls  []chatMessageToolCall `json:"tool_calls,omitempty"`
+}
 
-// ChatMessageToolCall is an alias to the lib/connector.ChatMessageToolCall type.
-type ChatMessageToolCall = libconnector.ChatMessageToolCall
+// chatMessageToolCall represents a tool call in a chat message.
+type chatMessageToolCall struct {
+	ID       string          `json:"id"`
+	Type     string          `json:"type"`
+	Function functionCallObj `json:"function"`
+}
 
-// FunctionCallObj is an alias to the lib/connector.FunctionCallObj type.
-type FunctionCallObj = libconnector.FunctionCallObj
+// functionCallObj represents a function call within a message.
+type functionCallObj struct {
+	Name      string `json:"name"`
+	Arguments string `json:"arguments"`
+}
 
 // ChatRequest represents the request body for OpenAI chat completion API.
 type ChatRequest struct {
 	Model          string           `json:"model"`
-	Messages       []ChatMessage    `json:"messages"`
+	Messages       []chatMessage    `json:"messages"`
 	Stream         bool             `json:"stream,omitempty"`
 	Tools          []ToolDefinition `json:"tools,omitempty"`
 	ResponseFormat *ResponseFormat  `json:"response_format,omitempty"`
@@ -26,7 +36,7 @@ type ChatRequest struct {
 
 // Choice represents a single completion choice in the API response.
 type Choice struct {
-	Message      ChatMessage `json:"message"`
+	Message      chatMessage `json:"message"`
 	FinishReason string      `json:"finish_reason"`
 }
 
@@ -88,7 +98,7 @@ type ToolDefinition struct {
 type FunctionCall struct {
 	ID       string          `json:"id"`
 	Type     string          `json:"type"` // "function"
-	Function FunctionCallObj `json:"function"`
+	Function functionCallObj `json:"function"`
 }
 
 // ToolCall represents a tool call in streaming response.
@@ -96,7 +106,7 @@ type ToolCall struct {
 	Index    int             `json:"index"`
 	ID       string          `json:"id,omitempty"`
 	Type     string          `json:"type,omitempty"`
-	Function FunctionCallObj `json:"function,omitempty"`
+	Function functionCallObj `json:"function,omitempty"`
 }
 
 // ResponseFormat is an alias to the lib/connector.ResponseFormat type.

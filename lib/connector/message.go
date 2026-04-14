@@ -5,7 +5,21 @@ import "github.com/sjsone/go-replikant-agent/lib/agentic_context"
 type Message struct {
 	Source agentic_context.Source
 	Text   string
-	// Directives []directive.Directive
+}
+
+func (m *Message) Role() string {
+	switch {
+	case m.Source.IsSystem():
+		return "system"
+	case m.Source.IsUser():
+		return "user"
+	case m.Source.IsAgent():
+		return "assistant"
+	case m.Source.IsTool():
+		return "tool"
+	default:
+		return "user"
+	}
 }
 
 func NewSystemMessage(text string) Message {

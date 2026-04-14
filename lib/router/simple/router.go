@@ -13,7 +13,7 @@ type SimpleRouter struct {
 	Prompt          string // TODO: check if this should be of type `prompt.Prompt` instead of `string`
 	delegate        router.Delegate
 	connector       connector.RoutingConnector
-	exampleMessages []connector.ChatMessage
+	exampleMessages []connector.Message
 	userQuery       string
 }
 
@@ -24,14 +24,14 @@ func NewSimpleRouter(
 	r := &SimpleRouter{
 		Prompt:          prompt,
 		connector:       conn,
-		exampleMessages: make([]connector.ChatMessage, 0),
+		exampleMessages: make([]connector.Message, 0),
 	}
 	// Initialize with default few-shot examples
 	r.exampleMessages = r.buildExampleMessages()
 	return r
 }
 
-func (r *SimpleRouter) SetExampleMessages(exampleMessages []connector.ChatMessage) {
+func (r *SimpleRouter) SetExampleMessages(exampleMessages []connector.Message) {
 	r.exampleMessages = exampleMessages
 }
 
@@ -127,21 +127,18 @@ func mapIndicesToNames(indices []int, availableNames map[int]string) []string {
 }
 
 // buildRoutingMessages builds the complete message sequence including examples and user prompt.
-func (r *SimpleRouter) buildRoutingMessages(allAvailableOptions []*router.RoutingOption) []connector.ChatMessage {
+func (r *SimpleRouter) buildRoutingMessages(allAvailableOptions []*router.RoutingOption) []connector.Message {
 	systemPrompt := r.buildSystemPrompt(allAvailableOptions)
 
-	messages := []connector.ChatMessage{
-		{Role: "system", Content: systemPrompt},
+	messages := []connector.Message{
+		connector.NewSystemMessage(systemPrompt),
 	}
 
 	// Add example messages if provided
 	messages = append(messages, r.exampleMessages...)
 
 	// Add the user prompt
-	messages = append(messages, connector.ChatMessage{
-		Role:    "user",
-		Content: r.buildUserPrompt(),
-	})
+	messages = append(messages, connector.NewUserMessage(r.buildUserPrompt()))
 
 	return messages
 }
@@ -177,53 +174,23 @@ func (r *SimpleRouter) buildSystemPrompt(options []*router.RoutingOption) string
 	return prompt
 }
 
-func (r *SimpleRouter) buildExampleMessages() []connector.ChatMessage {
-	examples := []connector.ChatMessage{
+func (r *SimpleRouter) buildExampleMessages() []connector.Message {
+	examples := []connector.Message{
 		// Example 1: Single option - simple capability request
-		{
-			Role:    "user",
-			Content: "Calculate the sum of these numbers",
-		},
-		{
-			Role:    "assistant",
-			Content: `{"selected_ids": ["calculator"], "reasoning": "User needs mathematical calculation. The calculator option provides calculation tools."}`,
-		},
+		connector.NewUserMessage("Calculate the sum of these numbers"),
+		connector.NewAgentMessage(`{"selected_ids": ["calculator"], "reasoning": "User needs mathematical calculation. The calculator option provides calculation tools."}`),
 		// Example 2: Multiple options with tool dependency
-		{
-			Role:    "user",
-			Content: "Generate a chart for the sales data",
-		},
-		{
-			Role:    "assistant",
-			Content: `{"selected_ids": ["data_retrieval", "chart_generation"], "reasoning": "User wants a chart generated from sales data. Option data_retrieval has data_retrieval tool. Option chart_generation has chart_generation tool which PROCESSES the retrieved data into visual format. Tool dependency: chart_generation needs input from data_retrieval. Therefore BOTH options must be activated."}`,
-		},
+		connector.NewUserMessage("Generate a chart for the sales data"),
+		connector.NewAgentMessage(`{"selected_ids": ["data_retrieval", "chart_generation"], "reasoning": "User wants a chart generated from sales data. Option data_retrieval has data_retrieval tool. Option chart_generation has chart_generation tool which PROCESSES the retrieved data into visual format. Tool dependency: chart_generation needs input from data_retrieval. Therefore BOTH options must be activated."}`),
 		// Example 3: No options - general conversation
-		{
-			Role:    "user",
-			Content: "Hello, can you help me?",
-		},
-		{
-			Role:    "assistant",
-			Content: `{"selected_ids": [], "reasoning": "General conversational opening. Doesn't require any tools or capabilities. No options needed."}`,
-		},
+		connector.NewUserMessage("Hello, can you help me?"),
+		connector.NewAgentMessage(`{"selected_ids": [], "reasoning": "General conversational opening. Doesn't require any tools or capabilities. No options needed."}`),
 		// Example 4: Multiple dependent options for complex workflow
-		{
-			Role:    "user",
-			Content: "Translate this document and format it as a PDF report",
-		},
-		{
-			Role:    "assistant",
-			Content: `{"selected_ids": ["translation", "document_formatting", "pdf_generation"], "reasoning": "User requests translation with PDF formatting. Option translation provides translation capability. Option document_formatting provides document formatting tools. Option pdf_generation provides PDF generation. All three options are needed: translation for content conversion, formatting for layout, and PDF generation for final output format."}`,
-		},
+		connector.NewUserMessage("Translate this document and format it as a PDF report"),
+		connector.NewAgentMessage(`{"selected_ids": ["translation", "document_formatting", "pdf_generation"], "reasoning": "User requests translation with PDF formatting. Option translation provides translation capability. Option document_formatting provides document formatting tools. Option pdf_generation provides PDF generation. All three options are needed: translation for content conversion, formatting for layout, and PDF generation for final output format."}`),
 		// Example 5: Optional option selection based on user preference
-		{
-			Role:    "user",
-			Content: "Send me a summary of today's news",
-		},
-		{
-			Role:    "assistant",
-			Content: `{"selected_ids": ["news"], "reasoning": "User wants a news summary. Option news provides news retrieval and summarization tools. This is sufficient for the request. No additional options are required."}`,
-		},
+		connector.NewUserMessage("Send me a summary of today's news"),
+		connector.NewAgentMessage(`{"selected_ids": ["news"], "reasoning": "User wants a news summary. Option news provides news retrieval and summarization tools. This is sufficient for the request. No additional options are required."}`),
 	}
 	return examples
 }

@@ -15,7 +15,7 @@ type mockRoutingConnector struct {
 	err      error
 }
 
-func (m *mockRoutingConnector) SendForRouting(ctx context.Context, messages []connector.ChatMessage, schema *connector.JSONSchema) (json.RawMessage, error) {
+func (m *mockRoutingConnector) SendForRouting(ctx context.Context, messages []connector.Message, schema *connector.JSONSchema) (json.RawMessage, error) {
 	if m.err != nil {
 		return nil, m.err
 	}
@@ -227,9 +227,9 @@ func TestSimpleRouter_Route_EmptyIDs(t *testing.T) {
 
 func TestSimpleRouter_SetExampleMessages(t *testing.T) {
 	// Setup
-	examples := []connector.ChatMessage{
-		{Role: "user", Content: "Example user message"},
-		{Role: "assistant", Content: `{"selected_ids": ["General"], "reasoning": "Example"}`},
+	examples := []connector.Message{
+		connector.NewUserMessage("Example user message"),
+		connector.NewAgentMessage(`{"selected_ids": ["General"], "reasoning": "Example"}`),
 	}
 
 	mockConn := &mockRoutingConnector{

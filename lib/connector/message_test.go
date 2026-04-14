@@ -338,3 +338,35 @@ func TestMessage_Copy(t *testing.T) {
 		t.Errorf("Original Text = %q, want 'Original text'", original.Text)
 	}
 }
+
+func TestMessage_Role(t *testing.T) {
+	tests := []struct {
+		name     string
+		message  Message
+		expected string
+	}{
+		{
+			name:     "system message",
+			message:  NewSystemMessage("test"),
+			expected: "system",
+		},
+		{
+			name:     "user message",
+			message:  NewUserMessage("test"),
+			expected: "user",
+		},
+		{
+			name:     "agent message",
+			message:  NewAgentMessage("test"),
+			expected: "assistant",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.message.Role(); got != tt.expected {
+				t.Errorf("Role() = %q, want %q", got, tt.expected)
+			}
+		})
+	}
+}

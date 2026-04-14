@@ -26,15 +26,29 @@ type AgenticSession struct {
 	maxAgentLoopCount    int
 }
 
-func NewAgenticSession(directiveMultiplexer multiplexer.Multiplexer, currentContext agentic_context.AgentContext, promptBuilder prompt_builder.PromptBuilder, loopController loop.LoopController, connector connector.Connector) *AgenticSession {
+type SessionConfig struct {
+	Multiplexer    multiplexer.Multiplexer
+	Context        agentic_context.AgentContext
+	PromptBuilder  prompt_builder.PromptBuilder
+	LoopController loop.LoopController
+	Connector      connector.Connector
+	Delegate       SessionDelegate
+	MaxLoops       int
+}
+
+func NewAgenticSession(config SessionConfig) *AgenticSession {
+	maxLoops := config.MaxLoops
+	if maxLoops <= 0 {
+		maxLoops = 100
+	}
 	return &AgenticSession{
-		directiveMultiplexer: directiveMultiplexer,
-		currentContext:       currentContext,
-		promptBuilder:        promptBuilder,
-		loopController:       loopController,
-		connector:            connector,
-		delegate:             nil,
-		maxAgentLoopCount:    100,
+		directiveMultiplexer: config.Multiplexer,
+		currentContext:       config.Context,
+		promptBuilder:        config.PromptBuilder,
+		loopController:       config.LoopController,
+		connector:            config.Connector,
+		delegate:             config.Delegate,
+		maxAgentLoopCount:    maxLoops,
 	}
 }
 
