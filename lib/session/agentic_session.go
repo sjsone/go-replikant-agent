@@ -125,7 +125,7 @@ func (as *AgenticSession) handleToolCall(ctx context.Context, new_part *agentic_
 		for _, d := range directives {
 			// Find the callable by name
 			for _, tc := range d.GetToolCallables() {
-				if tc.GetName() == call.Name {
+				if tc.GetTool().Name == call.Name {
 					toolCallable = tc
 					break
 				}

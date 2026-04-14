@@ -8,7 +8,6 @@ import (
 type StaticDirective struct {
 	name      string
 	prompt    *prompt.Prompt
-	tools     []*tool.Tool
 	callables []tool.ToolCallable
 }
 

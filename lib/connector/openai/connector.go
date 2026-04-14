@@ -123,7 +123,7 @@ func (c *OpenAIConnector) Send(ctx context.Context, messages *[]connector.Messag
 	// Extract tools from directives and add to request
 	allTools := make([]*tool.Tool, 0)
 	for _, d := range directives {
-		allTools = append(allTools, d.GetTools()...)
+		allTools = append(allTools, tool.ToolsFromCallables(d.GetToolCallables())...)
 	}
 	if len(allTools) > 0 {
 		req.Tools = c.toolsToOpenAI(allTools)
@@ -191,7 +191,7 @@ func (c *OpenAIConnector) Send(ctx context.Context, messages *[]connector.Messag
 			var toolCalls []tool.FunctionCall
 			for _, acc := range toolCallMap {
 				if acc.call.ID != "" && acc.call.Name != "" {
-					acc.call.Arguments = tool.ParseArgs(acc.args.String())
+					acc.call.Arguments = tool.ParseArgsToMap(acc.args.String())
 					toolCalls = append(toolCalls, *acc.call)
 				}
 			}
@@ -277,7 +277,7 @@ func (c *OpenAIConnector) Send(ctx context.Context, messages *[]connector.Messag
 	var toolCalls []tool.FunctionCall
 	for _, acc := range toolCallMap {
 		if acc.call.ID != "" && acc.call.Name != "" {
-			acc.call.Arguments = tool.ParseArgs(acc.args.String())
+			acc.call.Arguments = tool.ParseArgsToMap(acc.args.String())
 			toolCalls = append(toolCalls, *acc.call)
 		}
 	}

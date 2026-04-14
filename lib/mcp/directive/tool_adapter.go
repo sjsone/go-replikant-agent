@@ -34,10 +34,6 @@ func newMCPToolAdapter(mcpTool client.MCPTool, connection client.ServerConnectio
 	}
 }
 
-func (a *mcpToolAdapter) GetName() string {
-	return a.toolDef.Name
-}
-
 func (a *mcpToolAdapter) GetTool() *tool.Tool {
 	return &a.toolDef
 }

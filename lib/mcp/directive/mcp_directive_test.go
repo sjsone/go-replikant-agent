@@ -34,13 +34,13 @@ func (m *mockConnection) ServerName() string { return m.name }
 
 // --- mcpToolAdapter tests ---
 
-func TestMCPToolAdapter_GetName(t *testing.T) {
+func TestMCPToolAdapter_GetTool_Name(t *testing.T) {
 	mt := client.MCPTool{Name: "test_tool", Description: "A test tool"}
 	conn := &mockConnection{name: "test-server"}
 	adapter := newMCPToolAdapter(mt, conn)
 
-	if got := adapter.GetName(); got != "test_tool" {
-		t.Errorf("GetName() = %q, want %q", got, "test_tool")
+	if got := adapter.GetTool().Name; got != "test_tool" {
+		t.Errorf("GetTool().Name = %q, want %q", got, "test_tool")
 	}
 }
 
@@ -185,8 +185,8 @@ func TestNewMCPDirective(t *testing.T) {
 	if impl.GetName() != "my-server" {
 		t.Errorf("GetName() = %q, want %q", impl.GetName(), "my-server")
 	}
-	if len(impl.GetTools()) != 2 {
-		t.Errorf("GetTools() count = %d, want 2", len(impl.GetTools()))
+	if len(tool.ToolsFromCallables(impl.GetToolCallables())) != 2 {
+		t.Errorf("Tools count = %d, want 2", len(tool.ToolsFromCallables(impl.GetToolCallables())))
 	}
 	if len(impl.GetToolCallables()) != 2 {
 		t.Errorf("GetToolCallables() count = %d, want 2", len(impl.GetToolCallables()))
@@ -195,7 +195,7 @@ func TestNewMCPDirective(t *testing.T) {
 	// Verify tool names
 	names := make(map[string]bool)
 	for _, tc := range impl.GetToolCallables() {
-		names[tc.GetName()] = true
+		names[tc.GetTool().Name] = true
 	}
 	if !names["tool_a"] || !names["tool_b"] {
 		t.Errorf("missing tool names, got %v", names)

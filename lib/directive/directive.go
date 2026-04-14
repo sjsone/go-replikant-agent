@@ -8,6 +8,5 @@ import (
 type Directive interface {
 	GetName() string
 	GetPrompt() *prompt.Prompt
-	GetTools() []*tool.Tool
 	GetToolCallables() []tool.ToolCallable
 }

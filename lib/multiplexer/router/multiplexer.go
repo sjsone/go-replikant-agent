@@ -7,6 +7,7 @@ import (
 	"github.com/sjsone/go-replikant-agent/lib/agentic_context"
 	"github.com/sjsone/go-replikant-agent/lib/directive"
 	"github.com/sjsone/go-replikant-agent/lib/router"
+	"github.com/sjsone/go-replikant-agent/lib/tool"
 )
 
 type RouterMultiplexer struct {
@@ -80,7 +81,7 @@ func (m *RouterMultiplexer) routingOptionsFromDirectives() []*router.RoutingOpti
 
 	for _, d := range m.directives {
 		text := d.GetPrompt().Raw
-		tools := d.GetTools()
+		tools := tool.ToolsFromCallables(d.GetToolCallables())
 
 		// Extract tool names
 		toolNames := make([]string, 0, len(tools))
