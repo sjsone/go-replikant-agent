@@ -34,10 +34,6 @@ func (w *WeatherTool) GetTool() *tool.Tool {
 	return &w.Tool
 }
 
-func (w *WeatherTool) GetName() string {
-	return w.Tool.Name
-}
-
 // Execute implements ToolCallable.
 func (w *WeatherTool) Execute(ctx context.Context, args map[string]any) (string, error) {
 	lat, ok1 := args["latitude"].(float64)

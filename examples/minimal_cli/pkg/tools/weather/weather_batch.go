@@ -35,10 +35,6 @@ func (w *WeatherBatchTool) GetTool() *tool.Tool {
 	return &w.Tool
 }
 
-func (w *WeatherBatchTool) GetName() string {
-	return w.Tool.Name
-}
-
 // Execute implements ToolCallable with concurrent HTTP requests.
 func (w *WeatherBatchTool) Execute(ctx context.Context, args map[string]any) (string, error) {
 	locationsRaw, ok := args["locations"].([]any)

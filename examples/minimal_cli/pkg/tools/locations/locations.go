@@ -70,10 +70,6 @@ func (l *LocationsTool) GetTool() *tool.Tool {
 	return &l.Tool
 }
 
-func (l *LocationsTool) GetName() string {
-	return l.Tool.Name
-}
-
 // Execute implements ToolCallable.
 func (l *LocationsTool) Execute(ctx context.Context, args map[string]any) (string, error) {
 	var sb strings.Builder

@@ -36,10 +36,6 @@ func (t *WaitTool) GetTool() *tool.Tool {
 	return &t.Tool
 }
 
-func (t *WaitTool) GetName() string {
-	return t.Tool.Name
-}
-
 func (t *WaitTool) Execute(ctx context.Context, args map[string]any) (string, error) {
 	seconds := 1
 	if v, ok := args["seconds"].(float64); ok {

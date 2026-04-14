@@ -35,10 +35,6 @@ func (t *TimeTool) GetTool() *tool.Tool {
 	return &t.Tool
 }
 
-func (t *TimeTool) GetName() string {
-	return t.Tool.Name
-}
-
 // Execute implements ToolCallable.
 func (t *TimeTool) Execute(ctx context.Context, args map[string]any) (string, error) {
 	now := time.Now()

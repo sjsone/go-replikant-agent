@@ -138,7 +138,13 @@ func main() {
 	routingMultiplexer := router_multiplexer.NewRouterMultiplexer(routedDirectives, router)
 	multiplexer := combined_multiplexer.NewCombinerMultiplexer([]multiplexer_lib.Multiplexer{coreMultiplexer, routingMultiplexer})
 
-	agentic_session := lib_session.NewAgenticSession(multiplexer, *agenticContext, systemPromptBuilder, loopController, con)
+	agentic_session := lib_session.NewAgenticSession(lib_session.SessionConfig{
+		Multiplexer:   multiplexer,
+		Context:       *agenticContext,
+		PromptBuilder: systemPromptBuilder,
+		LoopController: loopController,
+		Connector:     con,
+	})
 
 	if *promptArg != "" {
 		mode.RunSingleTurnMode(agentic_session, agenticContext, *promptArg, router)
