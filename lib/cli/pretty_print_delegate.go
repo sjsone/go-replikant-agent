@@ -138,7 +138,7 @@ func (d *PrettyPrintDelegate) SessionOnToolExecuted(call tool.FunctionCall, resu
 	// Replace newlines with spaces for single-line display
 	content = strings.ReplaceAll(content, "\n", " ")
 
-	fmt.Printf("\n%s  %s%s %s%s%s%s", dim, color, icon, reset, dim, content, reset)
+	fmt.Printf("\n%s  %s%s %s%s%s%s\n", dim, color, icon, reset, dim, content, reset)
 }
 
 func (d *PrettyPrintDelegate) SessionOnStreamingChunk(chunk string) {
@@ -165,6 +165,80 @@ func (d *PrettyPrintDelegate) SessionOnRequestSent(messages []connector.Message,
 	if !d.firstChunk {
 		d.firstChunk = true
 	}
+
+	if len(messages) > 0 {
+		lastMessage := messages[len(messages)-1]
+
+		if !lastMessage.IsUserMessage() {
+			return
+		}
+	}
+
+	// Calculate box width
+	header := " Available Directives for model "
+	boxWidth := len(header) + 2
+	for _, directive := range directives {
+		lineLen := len(directive.GetName()) + 4 // "│ []: "
+		for _, tc := range directive.GetToolCallables() {
+			lineLen += len(tc.GetTool().Name) + 4 // ""tool_name", "
+			if lineLen > boxWidth {
+				boxWidth = lineLen
+			}
+		}
+	}
+	// Ensure minimum width
+	if boxWidth < 13 {
+		boxWidth = 13
+	}
+
+	if boxWidth > 50 {
+		boxWidth = 50
+	}
+
+	fmt.Println()
+	// Print top border
+	fmt.Printf("%s╭%s%s%s\n", dim, header, strings.Repeat("─", boxWidth-2), reset)
+
+	// Print each directive with its tools
+	for d_index, directive := range directives {
+		c := "├"
+		if d_index == 0 {
+			c = "╭"
+		}
+
+		fmt.Printf("%s│%s%s[%s]%s%s:\n", dim, c, cyan, directive.GetName(), reset, dim)
+
+		optPrompt := strings.Trim(directive.GetPrompt().Raw, "")
+		optPrompt = strings.ReplaceAll(optPrompt, "\n", " ")
+		optPromptTruncateLength := 40
+		if len(optPrompt) > optPromptTruncateLength {
+			optPrompt = optPrompt[:optPromptTruncateLength] + "..."
+		}
+
+		if optPrompt != "" {
+			fmt.Printf("%s││├─Prompt: '%s'%s\n", dim, optPrompt, reset)
+		} else {
+			promptIcon, promptIconColor := d.getColoredCheckIcon(false)
+			fmt.Printf("%s││├─Prompt: %s%s%s\n", dim, promptIconColor, promptIcon, reset)
+		}
+
+		if len(directive.GetToolCallables()) > 0 {
+			toolNames := []string{}
+
+			for _, tc := range directive.GetToolCallables() {
+				toolNames = append(toolNames, tc.GetTool().Name)
+			}
+
+			fmt.Printf("%s││╰─Tools: %v%s\n", dim, toolNames, reset)
+		} else {
+			toolsIcon, toolsIconColor := d.getColoredCheckIcon(false)
+			fmt.Printf("%s││╰─Tools: %s%s%s\n", dim, toolsIconColor, toolsIcon, reset)
+		}
+	}
+
+	// Print bottom border
+	fmt.Printf("%s╰╯%s\n", dim, reset)
+
 }
 
 func (d *PrettyPrintDelegate) SessionOnLoopIteration(iteration int) {
@@ -219,68 +293,4 @@ func (d *PrettyPrintDelegate) RouterOnRoutingDecision(decision router.RoutingDec
 		}
 	}
 	fmt.Printf("%s╚═════════════════%s\n", dim, reset)
-
-	// Display active directives with tools
-	if len(activeOptions) > 0 {
-		// Calculate box width
-		header := " Directives "
-		boxWidth := len(header) + 2
-		for _, opt := range activeOptions {
-			lineLen := len(opt.Name) + 4 // "│ []: "
-			for _, tn := range opt.ToolNames {
-				lineLen += len(tn) + 4 // ""tool_name", "
-				if lineLen > boxWidth {
-					boxWidth = lineLen
-				}
-			}
-		}
-		// Ensure minimum width
-		if boxWidth < 13 {
-			boxWidth = 13
-		}
-
-		if boxWidth > 50 {
-			boxWidth = 50
-		}
-
-		fmt.Println()
-		// Print top border
-		fmt.Printf("%s╭Directives%s%s\n", dim, strings.Repeat("─", boxWidth-2), reset)
-
-		// Print each directive with its tools
-		for opt_index, opt := range activeOptions {
-			//
-			//
-			c := "├"
-			if opt_index == 0 {
-				c = "╭"
-			}
-
-			fmt.Printf("%s│%s%s[%s]%s%s:\n", dim, c, cyan, opt.Name, reset, dim)
-
-			optPrompt := strings.Trim(opt.Text, "")
-			optPrompt = strings.ReplaceAll(optPrompt, "\n", " ")
-			optPromptTruncateLength := 40
-			if len(optPrompt) > optPromptTruncateLength {
-				optPrompt = optPrompt[:optPromptTruncateLength] + "..."
-			}
-
-			if optPrompt != "" {
-				fmt.Printf("%s││├─Prompt: '%s'%s\n", dim, optPrompt, reset)
-			} else {
-				promptIcon, promptIconColor := d.getColoredCheckIcon(false)
-				fmt.Printf("%s││├─Prompt: %s%s%s\n", dim, promptIconColor, promptIcon, reset)
-			}
-
-			if len(opt.ToolNames) > 0 {
-				fmt.Printf("%s││╰─Tools: %v%s\n", dim, opt.ToolNames, reset)
-			} else {
-				toolsIcon, toolsIconColor := d.getColoredCheckIcon(false)
-				fmt.Printf("%s││╰─Tools: %s%s%s\n", dim, toolsIconColor, toolsIcon, reset)
-			}
-		}
-
-		// Print bottom border
-		fmt.Printf("%s╰╯%s\n", dim, reset)
-	}
 }
