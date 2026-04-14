@@ -84,7 +84,7 @@ func TestParseArgs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			args := ParseArgs(tt.jsonArgs)
+			args := ParseArgsToMap(tt.jsonArgs)
 
 			if len(args) != tt.wantLen {
 				t.Errorf("ParseArgs() returned %d args, want %d", len(args), tt.wantLen)
@@ -104,7 +104,7 @@ func TestParseArgs(t *testing.T) {
 
 func TestParseArgs_Unicode(t *testing.T) {
 	jsonArgs := `{"greeting": "Hello 世界", "emoji": "🚀"}`
-	args := ParseArgs(jsonArgs)
+	args := ParseArgsToMap(jsonArgs)
 
 	if args["greeting"] != "Hello 世界" {
 		t.Errorf("Expected greeting to be 'Hello 世界', got %q", args["greeting"])
@@ -117,7 +117,7 @@ func TestParseArgs_Unicode(t *testing.T) {
 
 func TestParseArgs_EscapedCharacters(t *testing.T) {
 	jsonArgs := `{"text": "Line 1\nLine 2\tTabbed", "quote": "He said \"hello\""}`
-	args := ParseArgs(jsonArgs)
+	args := ParseArgsToMap(jsonArgs)
 
 	expected := "Line 1\nLine 2\tTabbed"
 	if args["text"] != expected {
@@ -304,8 +304,8 @@ func TestToolCallable_Interface(t *testing.T) {
 // MockToolCallableForTest is a minimal mock for interface testing
 type MockToolCallableForTest struct{}
 
-func (m *MockToolCallableForTest) GetName() string {
-	return "mockTool"
+func (m *MockToolCallableForTest) GetTool() *Tool {
+	return &Tool{Name: "mockTool"}
 }
 func (m *MockToolCallableForTest) Execute(ctx context.Context, args map[string]any) (string, error) {
 	return "result", nil
@@ -327,7 +327,7 @@ func TestTool_StructTags(t *testing.T) {
 
 func TestParseArgs_LargeJSON(t *testing.T) {
 	largeJSON := `{"key1": "value1", "key2": "value2", "key3": "value3", "key4": "value4", "key5": "value5"}`
-	args := ParseArgs(largeJSON)
+	args := ParseArgsToMap(largeJSON)
 
 	if len(args) != 5 {
 		t.Errorf("Expected 5 arguments, got %d", len(args))
@@ -357,7 +357,7 @@ func TestParseArgs_Whitespace(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			args := ParseArgs(tt.jsonArgs)
+			args := ParseArgsToMap(tt.jsonArgs)
 			if args["key"] != "value" {
 				t.Errorf("Expected key to be 'value', got %v", args["key"])
 			}

@@ -14,7 +14,16 @@ type Tool struct {
 // ToolCallable is the interface that tools must implement for execution.
 type ToolCallable interface {
 	Execute(ctx context.Context, args map[string]any) (string, error)
-	GetName() string
+	GetTool() *Tool
+}
+
+// ToolsFromCallables extracts tool metadata from a slice of callables.
+func ToolsFromCallables(callables []ToolCallable) []*Tool {
+	tools := make([]*Tool, 0, len(callables))
+	for _, c := range callables {
+		tools = append(tools, c.GetTool())
+	}
+	return tools
 }
 
 // FunctionCall represents a parsed tool call from the LLM response.
