@@ -75,7 +75,7 @@ func (as *AgenticSession) ProcessContextPart(ctx context.Context, part *agentic_
 			as.delegate.SessionOnLoopIteration(i)
 		}
 		var err error
-		err = as.loopInner(sessionCtx, directives)
+		err = as.Invoke(sessionCtx, directives)
 		if err != nil {
 			return fmt.Errorf("loop iteration %d: %w", i, err)
 		}
@@ -170,8 +170,8 @@ func (as *AgenticSession) handleToolCall(ctx context.Context, new_part *agentic_
 	}
 }
 
-// TODO: rename `loopInner` to something better
-func (as *AgenticSession) loopInner(ctx context.Context, directives []directive.Directive) error {
+// TODO: rename `Invoke` to something better
+func (as *AgenticSession) Invoke(ctx context.Context, directives []directive.Directive) error {
 
 	messages := as.buildMessagesForConnector(directives)
 
