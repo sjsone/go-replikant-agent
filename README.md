@@ -1,6 +1,7 @@
 # Replikant Agent
 
-> [!IMPORTANT] Evaluation Process
+> [!IMPORTANT]
+> **Evaluation Process**    
 > This is a WIP project evaluating an agentic framework focused on the implementation of system directives and modular prompt architecture.
 
 ```
