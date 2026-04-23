@@ -5,12 +5,13 @@ import "context"
 // ServerConfig defines how to connect to an MCP server.
 // Use Command/Args for stdio transport, or URL for HTTP transport.
 type ServerConfig struct {
-	Name    string   // Server identifier, used as directive name
-	Command string   // Command to run (stdio transport)
-	Args    []string // Arguments for the command (stdio transport)
-	Env     []string // Environment variables for the command (stdio transport)
-	URL     string   // HTTP endpoint URL (HTTP transport)
-	Prompt  string   // Optional custom system prompt for the directive
+	Name      string   // Server identifier, used as directive name
+	Command   string   // Command to run (stdio transport)
+	Args      []string // Arguments for the command (stdio transport)
+	Env       []string // Environment variables for the command (stdio transport)
+	URL       string   // HTTP endpoint URL (HTTP transport)
+	AuthToken string   // Optional Bearer token for HTTP transport authentication
+	Prompt    string   // Optional custom system prompt for the directive
 }
 
 // MCPTool represents a tool discovered from an MCP server.

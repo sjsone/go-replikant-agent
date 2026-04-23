@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -16,6 +17,19 @@ func newHTTPConnection(config ServerConfig) *httpConnection {
 	return &httpConnection{config: config}
 }
 
+// authTransport wraps an http.RoundTripper to inject an Authorization header.
+type authTransport struct {
+	base   http.RoundTripper
+	token  string
+}
+
+func (t *authTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	if t.token != "" {
+		req.Header.Set("Authorization", "Bearer "+t.token)
+	}
+	return t.base.RoundTrip(req)
+}
+
 func (c *httpConnection) Connect(ctx context.Context) error {
 	client := mcp.NewClient(&mcp.Implementation{
 		Name:    "replikant-agent",
@@ -23,6 +37,15 @@ func (c *httpConnection) Connect(ctx context.Context) error {
 	}, nil)
 
 	transport := &mcp.StreamableClientTransport{Endpoint: c.config.URL}
+	if c.config.AuthToken != "" {
+		transport.HTTPClient = &http.Client{
+			Transport: &authTransport{
+				base:  http.DefaultTransport,
+				token: c.config.AuthToken,
+			},
+		}
+	}
+
 	session, err := client.Connect(ctx, transport, nil)
 	if err != nil {
 		return err
